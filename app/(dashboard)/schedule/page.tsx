@@ -1,46 +1,22 @@
-// app/(dashboard)/schedule/page.tsx
 'use client';
 
+// app/(dashboard)/schedule/page.tsx
 // Single client page: no redirect/notFound logic is needed here (unlike
 // Projects), so there is no reason to split a Server wrapper from the
 // interactive part - see components/projects/ProjectsView.tsx for when that
 // split IS required.
+// [FIX] date helpers now live in lib/schedule-dates.ts - a page.tsx file may
+// only have a default export (plus a short allow-list like `metadata`); any
+// other named export fails `next build` with "X is not a valid Page export
+// field".
 import { useEffect, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import { Alert, Button, Card, EmptyState, Skeleton } from '@/components/ui';
 import { GenerateSchedule } from '@/components/schedule/GenerateSchedule';
 import { api, ClientApiError } from '@/lib/client-api';
 import { todayInAppTimezone } from '@/lib/dates';
+import { addDays, dayLabel, plannedMinutes, weekDates, weekRange } from '@/lib/schedule-dates';
 import { formatMinutes } from '@/lib/format';
 import type { Schedule, ScheduleBlock } from '@/types/compass';
-
-export function addDays(date: string, days: number): string {
-  const d = new Date(`${date}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-/** Monday..Sunday range containing `date` (plain UTC date math, no timezone library). */
-export function weekRange(date: string): { from: string; to: string } {
-  const d = new Date(`${date}T00:00:00Z`);
-  const day = d.getUTCDay(); // 0 = Sunday
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const from = addDays(date, diffToMonday);
-  return { from, to: addDays(from, 6) };
-}
-
-export function weekDates(from: string): string[] {
-  return Array.from({ length: 7 }, (_, i) => addDays(from, i));
-}
-
-const DAY_LABELS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-
-export function dayLabel(date: string): string {
-  return DAY_LABELS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
-}
-
-export function plannedMinutes(blocks: ScheduleBlock[]): number {
-  return blocks.reduce((sum, b) => sum + b.duration_min, 0);
-}
 
 const inputStyle = {
   height: 36,
@@ -311,4 +287,4 @@ export default function SchedulePage() {
       )}
     </div>
   );
-}
+    }
